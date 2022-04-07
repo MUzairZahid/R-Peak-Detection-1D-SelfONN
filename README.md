@@ -3,8 +3,8 @@
 
 This repository includes the implentation of R peak detection method in [Robust Peak Detection for Holter ECGs by Self-Organized Operational Neural Networks](https://ieeexplore.ieee.org/abstract/document/9743556).
 
-![The proposed systematic approach and network architecture](https://user-images.githubusercontent.com/43520052/162128277-43fef402-38c6-4bdd-b198-2ca117a7fae7.png)
-
+## Network Architecture
+![image](https://user-images.githubusercontent.com/43520052/162131931-0856cc7f-4065-43d4-b1ec-2d664b4ffd3f.png)
 
 ## Dataset
 
