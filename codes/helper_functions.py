@@ -681,5 +681,79 @@ def bandpass_filter(data, lowcut = 0.001, highcut = 15.0, signal_freq = 400, fil
 
 
 
+#________________________________________________________
+# Function to prepare training data.
+#________________________________________________________
+def extract_training_windows(ecg, R_ann, S_ann, V_ann, win_size, beat_type = 'all'):
     
+    print('______________________________________________')
+    print('Preparing Training Data for {} beats....'.format(beat_type))
+    print('______________________________________________')
+
+    # Total windows in ecg. (Number of training examples)
+    tot_wins = int(len(ecg)/win_size)
+
+    X_train = np.zeros((tot_wins,win_size), dtype=np.float64)
+    y_train = np.zeros((tot_wins,win_size))
+
+    # Annotations for each window. (R,S,V)
+    R_w = []
+    S_w = []
+    V_w = []
+    
+    normalize = partial(processing.normalize_bound, lb=-1, ub=1)
+    
+    for i in tqdm(range(tot_wins)):
+    
+        # Start of window in whole ecg stream.
+        st = i*win_size
+        # End of window
+        end = st + win_size
+
+        # R peaks in the current window. 
+        rIndx = np.where((R_ann >= st) & (R_ann < end))[0]
+
+        # S peaks in the current window. 
+        sIndx = np.where((S_ann >= st) & (S_ann < end))[0]
+
+        # V peaks in the current window. 
+        vIndx = np.where((V_ann >= st) & (V_ann < end))[0]
+
+        R_w.append(R_ann[rIndx]-st)
+        S_w.append(S_ann[sIndx]-st)
+        V_w.append(V_ann[vIndx]-st)
+
+        if beat_type == 'all':
+                  
+            for j in R_ann[rIndx]:
+                r = int(j)-st
+                y_train[i,r-2:r+3] = 1
+
+        elif beat_type == 'S':
+            for j in S_ann[sIndx]:
+                r = int(j)-st
+                y_train[i,r-2:r+3] = 1
+
+        elif beat_type == 'V':
+            for j in V_ann[vIndx]:
+                r = int(j)-st
+                y_train[i,r-3:r+4] = 1
+
+
+        # If ecg window is non zero. Normalize it. 
+        if ecg[st:end].any():
+            X_train[i,:] = np.squeeze(np.apply_along_axis(normalize, 0, ecg[st:end]))
+        # All zero ecg window. (Dont normalize)
+        else:
+            X_train[i,:] = ecg[st:end].T
+
+
+    # Reshaping (n_examples,win_size,1)   
+    #X_train = X_train.reshape((X_train.shape[0], X_train.shape[1], 1))
+    X_train = np.expand_dims(X_train, axis=2)
+    
+    #y_train = y_train.reshape((y_train.shape[0], y_train.shape[1], 1)).astype(int)
+    y_train = np.expand_dims(y_train, axis=2)
+    
+    return X_train, y_train, R_w, S_w, V_w
   
